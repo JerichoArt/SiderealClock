@@ -1,15 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sidereal Clock</title>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0F172A">
-  <link rel="apple-touch-icon" href="icon-192.png">
-</head>
-<body>
-  <!-- Your sidereal clock HTML goes here -->
   <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -136,16 +124,16 @@
       background-color: #111827;
       border: 2px solid #374151;
       border-radius: 0.5rem;
-      padding: 20px;
+      padding: 10px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
       width: 100%;
       max-width: 300px;
     }
 
     .legend-container h2 {
-      font-size: 1.2em;
+      font-size: 1em;
       font-weight: bold;
-      margin-bottom: 15px;
+      margin-bottom: 10px;
       text-align: center;
       color: #F9FAFB;
     }
@@ -153,7 +141,7 @@
     .legend-item {
       display: flex;
       align-items: center;
-      margin-bottom: 9px;
+      margin-bottom: 2px;
     }
 
     .legend-color-box {
@@ -365,17 +353,6 @@
     // Initial setup
     drawNotches();
     updateClock();
-  </script>
-</body>
-</html>
-
-
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js')
-        .then(reg => console.log('Service Worker registered!', reg))
-        .catch(err => console.log('Service Worker registration failed:', err));
-    }
   </script>
 </body>
 </html>
