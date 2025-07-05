@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sidereal Clock</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0F172A">
+  <link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+  <!-- Your sidereal clock HTML goes here -->
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sidereal Clock with J2000 Epoch</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0F172A;
+      color: #F9FAFB;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+      overflow: hidden;
+    }
+
+    .main-content-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 40px;
+      margin-bottom: 20px;
+    }
+
+    @media (min-width: 768px) {
+      .main-content-wrapper {
+        flex-direction: row;
+        justify-content: center;
+        align-items: flex-start;
+      }
+    }
+
+    .clock-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .clock-face-wrapper {
+      position: relative;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      background-color: #111827;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #374151;
+    }
+
+    .clock-face {
+      width: 100%;
+      height: 100%;
+    }
+
+    .hand {
+      stroke-linecap: round;
+      transform-origin: 100px 100px;
+      transition: transform 0.1s linear;
+    }
+
+    .hand-arns { stroke: #34D399; stroke-width: 3; }
+    .hand-dins { stroke: #60A5FA; stroke-width: 2; }
+    .hand-secs { stroke: #F87171; stroke-width: 1.5; }
+	
+	#arns-display-text {
+		font-size: 0.8em;
+		font-weight: bold;
+		fill: #34D399; /* Match the green hand */
+		text-anchor: middle;
+		dominant-baseline: central;
+	}
+
+
+    .center-dot {
+      fill: #F9FAFB;
+      stroke: #374151;
+      stroke-width: 1;
+    }
+
+    /* Combined styles for all display boxes for consistency */
+    #rotation-display, #year-display, #pings-display {
+      font-size: 1.25rem; /* Adjusted size for better fit */
+      font-weight: bold;
+      padding: 0.75rem 1.25rem;
+      background-color: #111827;
+      border: 2px solid #374151;
+      border-radius: 0.5rem;
+      box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+      text-align: center;
+      white-space: nowrap; /* Prevent text wrapping */
+    }
+    
+    /* Style for the row container to place displays side-by-side */
+    .info-row {
+        display: flex;
+        gap: 0.25rem;
+        justify-content: center;
+        margin-top: 0.1rem;
+    }
+
+    #year-display {
+      color: #60F9A3;
+    }
+
+    /* Style for the Pings display */
+    #pings-display {
+        color: #FFD700; /* Gold color from legend */
+			font-size: 1rem; /* Smaller font */
+			padding: 0.25rem 0.5rem; /* Less padding */
+			margin-bottom: 0.1rem; /* Reduce space below */
+			min-width: 60px; /* Optional: ensures it doesn't shrink too much */
+    }
+
+    .legend-container {
+      background-color: #111827;
+      border: 2px solid #374151;
+      border-radius: 0.5rem;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      max-width: 300px;
+    }
+
+    .legend-container h2 {
+      font-size: 1.2em;
+      font-weight: bold;
+      margin-bottom: 15px;
+      text-align: center;
+      color: #F9FAFB;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 9px;
+    }
+
+    .legend-color-box {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      margin-right: 10px;
+      border: 1px solid #374151;
+      flex-shrink: 0;
+    }
+
+    .legend-item span {
+      font-size: 0.9em;
+      color: #F9FAFB;
+    }
+
+    .legend-item .value {
+      margin-left: auto;
+      font-weight: bold;
+      color: #9CA3AF;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .legend-item.no-color .value {
+      color: #F9FAFB;
+    }
+
+    .color-red { background-color: #F87171; }
+    .color-blue { background-color: #60A5FA; }
+    .color-green { background-color: #34D399; }
+    .color-pings { background-color: #FFD700; }
+  </style>
+</head>
+<body>
+  <div class="main-content-wrapper">
+    <div class="clock-container">
+      <div class="clock-face-wrapper">
+        <svg class="clock-face" viewBox="-20 -20 240 240">
+          <circle cx="100" cy="100" r="95" fill="none" stroke="#374151" stroke-width="2" />
+          <g id="arns-notches"></g>
+          <g id="dins-notches"></g>
+          <line id="arns-hand" class="hand hand-arns" x1="100" y1="100" x2="100" y2="8" />
+          <line id="dins-hand" class="hand hand-dins" x1="100" y1="100" x2="100" y2="55" />
+          <line id="secs-hand" class="hand hand-secs" x1="100" y1="100" x2="100" y2="25" />
+          <circle cx="100" cy="100" r="4" class="center-dot" />
+          <text id="arns-display-text" x="0" y="0">0</text>
+        </svg>
+      </div>
+      <!-- Ping box placed between clock and info row -->
+<div id="pings-display">0</div>
+
+<div class="info-row">
+  <div id="rotation-display">Α I 1</div>
+  <div id="year-display">Year 0</div>
+</div>
+
+    </div>
+
+    <div class="legend-container">
+      <h2>Time Unit Lengths</h2>
+      <div class="legend-item"><div class="legend-color-box color-pings"></div><span>1 Ping</span><span class="value" id="ping-length"></span></div>
+      <div class="legend-item"><div class="legend-color-box color-red"></div><span>1 Sec</span><span class="value" id="sec-length"></span></div>
+      <div class="legend-item"><div class="legend-color-box color-blue"></div><span>1 Din</span><span class="value" id="din-length"></span></div>
+      <div class="legend-item"><div class="legend-color-box color-green"></div><span>1 Arn</span><span class="value" id="arn-length"></span></div>
+      <hr style="border-color: #374151; margin: 10px 0;">
+      <div class="legend-item no-color"><div class="legend-color-box" style="background-color: transparent; border: none;"></div><span>1 Sec =</span><span class="value">10 Pings</span></div>
+      <div class="legend-item no-color"><div class="legend-color-box" style="background-color: transparent; border: none;"></div><span>1 Din =</span><span class="value">10 Secs</span></div>
+      <div class="legend-item no-color"><div class="legend-color-box" style="background-color: transparent; border: none;"></div><span>1 Arn =</span><span class="value">50 Dins</span></div>
+      <div class="legend-item no-color"><div class="legend-color-box" style="background-color: transparent; border: none;"></div><span>1 Day =</span><span class="value">10 Arns</span></div>
+      <div class="legend-item no-color"><div class="legend-color-box" style="background-color: transparent; border: none;"></div><span>1 Month =</span><span class="value">50 Days</span></div>
+      <div class="legend-item no-color"><div class="legend-color-box" style="background-color: transparent; border: none;"></div><span>1 Season =</span><span class="value">5 Months</span></div>
+      <div class="legend-item no-color"><div class="legend-color-box" style="background-color: transparent; border: none;"></div><span>1 Year =</span><span class="value">4 Seasons</span></div>
+    </div>
+  </div>
+
+  <script>
+    // Constants for time calculation based on a sidereal year
+    const SIDEREAL_YEAR_SECS = (365 * 86400) + (5 * 3600) + (48 * 60) + 45;
+    const EPOCH = new Date('2000-01-01T11:58:55.816Z'); // J2000 epoch
+
+    // Custom time unit definitions
+    const DAYS_IN_YEAR = 1000;
+    const DAYS_PER_MONTH = 50;
+    const MONTHS_PER_SEASON = 5;
+    const SEASONS_PER_YEAR = 4;
+    const ARNS_PER_DAY = 10;
+    const DINS_PER_ARN = 50;
+    const SECS_PER_DIN = 10;
+    const PINGS_PER_SEC = 10;
+
+    // Calculate the length of each custom time unit in standard seconds
+    const PING_LENGTH = SIDEREAL_YEAR_SECS / (DAYS_IN_YEAR * ARNS_PER_DAY * DINS_PER_ARN * SECS_PER_DIN * PINGS_PER_SEC);
+    const SEC_LENGTH = PING_LENGTH * PINGS_PER_SEC;
+    const DIN_LENGTH = SEC_LENGTH * SECS_PER_DIN;
+    const ARN_LENGTH = DIN_LENGTH * DINS_PER_ARN;
+
+    // Get DOM elements for manipulation
+    const arnsHand = document.getElementById('arns-hand');
+    const dinsHand = document.getElementById('dins-hand');
+    const secsHand = document.getElementById('secs-hand');
+    const arnsDisplayText = document.getElementById('arns-display-text');
+    const rotationEl = document.getElementById('rotation-display');
+    const yearDisplayEl = document.getElementById('year-display');
+    const pingsDisplayEl = document.getElementById('pings-display');
+
+    // Populate the legend with calculated time unit lengths
+    document.getElementById('ping-length').textContent = `${PING_LENGTH.toFixed(2)} s`;
+    document.getElementById('sec-length').textContent = `${SEC_LENGTH.toFixed(2)} s`;
+    document.getElementById('din-length').textContent = `${DIN_LENGTH.toFixed(2)} s`;
+    document.getElementById('arn-length').textContent = `${ARN_LENGTH.toFixed(2)} s`;
+
+    // Function to draw notches on the clock face for Arns and Dins
+    function drawNotches() {
+      const arnsGroup = document.getElementById('arns-notches');
+      const dinsGroup = document.getElementById('dins-notches');
+      arnsGroup.innerHTML = '';
+      dinsGroup.innerHTML = '';
+
+      // Draw 10 major notches for Arns
+      for (let i = 0; i < ARNS_PER_DAY; i++) {
+        const angle = (i / ARNS_PER_DAY) * 360 - 90;
+        const rad = angle * Math.PI / 180;
+        const x1 = 100 + 87 * Math.cos(rad);
+        const y1 = 100 + 87 * Math.sin(rad);
+        const x2 = 100 + 95 * Math.cos(rad);
+        const y2 = 100 + 95 * Math.sin(rad);
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', x1);
+        line.setAttribute('y1', y1);
+        line.setAttribute('x2', x2);
+        line.setAttribute('y2', y2);
+        line.setAttribute('stroke', '#F9FAFB');
+        line.setAttribute('stroke-width', 2);
+        arnsGroup.appendChild(line);
+      }
+      
+      // Draw 50 minor notches for Dins
+      for (let i = 0; i < DINS_PER_ARN; i++) {
+        const angle = (i / DINS_PER_ARN) * 360 - 90;
+        const rad = angle * Math.PI / 180;
+        const x1 = 100 + 45 * Math.cos(rad);
+        const y1 = 100 + 45 * Math.sin(rad);
+        const x2 = 100 + 50 * Math.cos(rad);
+        const y2 = 100 + 50 * Math.sin(rad);
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', x1);
+        line.setAttribute('y1', y1);
+        line.setAttribute('x2', x2);
+        line.setAttribute('y2', y2);
+        line.setAttribute('stroke', i % 10 === 0 ? '#F9FAFB' : '#9CA3AF'); // Emphasize every 10th Din
+        line.setAttribute('stroke-width', i % 10 === 0 ? 2 : 1);
+        dinsGroup.appendChild(line);
+      }
+    }
+
+    // Main function to update the clock hands and text displays
+    function updateClock() {
+      const now = new Date();
+      const elapsed = (now - EPOCH) / 1000; // Total elapsed standard seconds since epoch
+      const totalPings = elapsed / PING_LENGTH; // Total elapsed custom pings
+
+      // Calculate current time units from total pings
+      const pings = totalPings % PINGS_PER_SEC;
+      const secs = (totalPings / PINGS_PER_SEC) % SECS_PER_DIN;
+      const dins = (totalPings / (PINGS_PER_SEC * SECS_PER_DIN)) % DINS_PER_ARN;
+      const arns = (totalPings / (PINGS_PER_SEC * SECS_PER_DIN * DINS_PER_ARN)) % ARNS_PER_DAY;
+
+      // Rotate clock hands based on current time units
+      secsHand.style.transform = `rotate(${(secs / SECS_PER_DIN) * 360}deg)`;
+      dinsHand.style.transform = `rotate(${(dins / DINS_PER_ARN) * 360}deg)`;
+      arnsHand.style.transform = `rotate(${(arns / ARNS_PER_DAY) * 360}deg)`;
+      
+      // MODIFICATION: Update the pings display with only the number
+      pingsDisplayEl.textContent = `${Math.floor(pings)}`;
+
+      // Update the rotating Arn number display around the clock face
+      const arnsDisplayRadius = 105;
+      const angleRad = ((arns / ARNS_PER_DAY) * 360 - 90) * Math.PI / 180;
+      const x = 100 + arnsDisplayRadius * Math.cos(angleRad);
+      const y = 100 + arnsDisplayRadius * Math.sin(angleRad);
+      arnsDisplayText.textContent = Math.floor(arns) + 1;
+      arnsDisplayText.setAttribute('x', x);
+      arnsDisplayText.setAttribute('y', y);
+
+      // Calculate and display the current date (Season, Month, Day)
+      const totalDays = Math.floor(totalPings / (PINGS_PER_SEC * SECS_PER_DIN * DINS_PER_ARN * ARNS_PER_DAY));
+      const dayOfYear = totalDays % DAYS_IN_YEAR;
+
+      const seasons = ['Α', 'Β', 'Γ', 'Δ'];
+      const months = ['I', 'II', 'III', 'IV', 'V'];
+      const daysPerSeason = DAYS_PER_MONTH * MONTHS_PER_SEASON;
+
+      const seasonIndex = Math.floor(dayOfYear / daysPerSeason);
+      const dayInSeason = dayOfYear % daysPerSeason;
+      const monthIndex = Math.floor(dayInSeason / DAYS_PER_MONTH);
+      const dayInMonth = (dayInSeason % DAYS_PER_MONTH) + 1;
+
+      rotationEl.textContent = `${seasons[seasonIndex]} ${months[monthIndex]} ${dayInMonth}`;
+
+      // Calculate and display the current year
+      const siderealYear = Math.floor(elapsed / SIDEREAL_YEAR_SECS);
+      yearDisplayEl.textContent = `Year ${siderealYear}`;
+
+      // Loop the update function
+      requestAnimationFrame(updateClock);
+    }
+
+    // Initial setup
+    drawNotches();
+    updateClock();
+  </script>
+</body>
+</html>
+
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js')
+        .then(reg => console.log('Service Worker registered!', reg))
+        .catch(err => console.log('Service Worker registration failed:', err));
+    }
+  </script>
+</body>
+</html>
