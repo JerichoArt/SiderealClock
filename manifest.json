@@ -1,11 +1,11 @@
 {
   "name": "Sidereal Clock",
-  "short_name": "Clock",
-  "description": "Your custom sidereal clock with legend, pings, and 2 dials.",
-  "start_url": "./index.html",
+  "short_name": "SiderealClock",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#0F172A",
   "theme_color": "#0F172A",
+  "description": "A Sidereal Clock with J2000 Epoch",
   "icons": [
     {
       "src": "icon-192.png",
