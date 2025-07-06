@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Sidereal Year Clock</title>
   <link rel="manifest" href="manifest.json">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+	<meta charset="UTF-8" />
+  <title>Sidereal Year Clock</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.8.0/suncalc.min.js"></script>
   <style>
     body {
       font-family: 'Inter', sans-serif;
@@ -185,6 +187,7 @@
       <div class="clock-face-wrapper">
         <svg class="clock-face" viewBox="-20 -20 240 240">
           <circle cx="100" cy="100" r="95" fill="none" stroke="#374151" stroke-width="2" />
+		  <path id="daylight-arc" fill="rgba(255, 255, 128, 0.3)" />
           <g id="arns-notches"></g>
           <g id="dins-notches"></g>
           <line id="arns-hand" class="hand hand-arns" x1="100" y1="100" x2="100" y2="8" />
@@ -252,6 +255,48 @@
     const rotationEl = document.getElementById('rotation-display');
     const yearDisplayEl = document.getElementById('year-display');
     const pingsDisplayEl = document.getElementById('pings-display');
+	
+	function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
+      const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
+      return {
+        x: centerX + (radius * Math.cos(angleInRadians)),
+        y: centerY + (radius * Math.sin(angleInRadians))
+      };
+    }
+
+    function describeArc(x, y, radius, startAngle, endAngle) {
+      const start = polarToCartesian(x, y, radius, endAngle);
+      const end = polarToCartesian(x, y, radius, startAngle);
+      const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+      const d = [
+        "M", start.x, start.y,
+        "A", radius, radius, 0, largeArcFlag, 0, end.x, end.y,
+        "L", x, y,
+        "L", start.x, start.y,
+        "Z"
+      ].join(" ");
+      return d;
+    }
+
+    function updateDaylightArc() {
+      // Coordinates for London (GMT). You can change these.
+      const lat = 51.5074;
+      const lon = -0.1278;
+
+      const times = SunCalc.getTimes(new Date(), lat, lon);
+      const sunrise = times.sunrise;
+      const sunset = times.sunset;
+
+      const sunriseHours = sunrise.getHours() + sunrise.getMinutes() / 60;
+      const sunsetHours = sunset.getHours() + sunset.getMinutes() / 60;
+
+      // Convert 24-hour time to 360 degrees for the clock face
+      const startAngle = (sunriseHours / 24) * 360;
+      const endAngle = (sunsetHours / 24) * 360;
+
+      const daylightArc = document.getElementById('daylight-arc');
+      daylightArc.setAttribute("d", describeArc(100, 100, 95, startAngle, endAngle));
+    }
 
     function drawNotches() {
       const arnsGroup = document.getElementById('arns-notches');
@@ -274,6 +319,7 @@
         line.setAttribute('stroke', '#F9FAFB');
         line.setAttribute('stroke-width', 2);
         arnsGroup.appendChild(line);
+		updateDaylightArc();
       }
 
       for (let i = 0; i < DINS_PER_ARN; i++) {
@@ -346,6 +392,10 @@
 
       const siderealYear = Math.floor(elapsed / SIDEREAL_YEAR_SECS);
       yearDisplayEl.textContent = `Year ${siderealYear}`;
+	  
+	  if (new Date().getHours() === 0 && new Date().getMinutes() === 0) {
+        updateDaylightArc(); // Add this to update the arc daily
+      }
 
       requestAnimationFrame(updateClock);
     }
