@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="manifest" href="manifest.json">
-	<meta charset="UTF-8" />
+  <meta charset="UTF-8" />
   <title>Sidereal Year Clock</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="manifest.json">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.8.0/suncalc.min.js"></script>
   <style>
     body {
       font-family: 'Inter', sans-serif;
@@ -42,7 +41,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 10px; /* Reduced for tighter spacing */
+      gap: 10px;
     }
 
     .clock-face-wrapper {
@@ -110,14 +109,12 @@
       display: flex;
       gap: 0.25rem;
       justify-content: center;
-      margin-top: 0; /* Tighter gap */
     }
 
     #pings-display {
       color: #FFD700;
       font-size: 1rem;
       padding: 0.25rem 0.5rem;
-      margin-bottom: 0; /* Tighter gap */
       min-width: 60px;
     }
 
@@ -128,7 +125,7 @@
       padding: 10px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
       width: 100%;
-      max-width: 320px; /* Slightly wider */
+      max-width: 320px;
     }
 
     .legend-container h2 {
@@ -136,7 +133,6 @@
       font-weight: bold;
       margin-bottom: 10px;
       text-align: center;
-      color: #F9FAFB;
     }
 
     .legend-item {
@@ -156,11 +152,10 @@
 
     .legend-item span {
       font-size: 0.9em;
-      color: #F9FAFB;
     }
 
     .legend-item span:first-of-type {
-      margin-right: 0.25rem; /* Adds gap after '=' */
+      margin-right: 0.25rem;
     }
 
     .legend-item .value {
@@ -179,6 +174,30 @@
     .color-blue { background-color: #60A5FA; }
     .color-green { background-color: #34D399; }
     .color-pings { background-color: #FFD700; }
+	.color-day {
+  color: #2CA98A; /* Medium Green */
+}
+
+.color-month {
+  color: #248F77; /* Viridian */
+}
+
+.color-season {
+  color: #1E7762; /* Deep Green */
+}
+
+.legend-color-day {
+  background-color: #2CA98A;
+}
+
+.legend-color-month {
+  background-color: #248F77;
+}
+
+.legend-color-season {
+  background-color: #1E7762;
+}
+
   </style>
 </head>
 <body>
@@ -187,12 +206,11 @@
       <div class="clock-face-wrapper">
         <svg class="clock-face" viewBox="-20 -20 240 240">
           <circle cx="100" cy="100" r="95" fill="none" stroke="#374151" stroke-width="2" />
-		  <path id="daylight-arc" fill="rgba(255, 255, 128, 0.3)" />
           <g id="arns-notches"></g>
           <g id="dins-notches"></g>
           <line id="arns-hand" class="hand hand-arns" x1="100" y1="100" x2="100" y2="8" />
-          <line id="dins-hand" class="hand hand-dins" x1="100" y1="100" x2="100" y2="60" /> <!-- Din hand shorter -->
-          <line id="secs-hand" class="hand hand-secs" x1="100" y1="100" x2="100" y2="20" /> <!-- Sec hand longer -->
+          <line id="dins-hand" class="hand hand-dins" x1="100" y1="100" x2="100" y2="60" />
+          <line id="secs-hand" class="hand hand-secs" x1="100" y1="100" x2="100" y2="20" />
           <circle cx="100" cy="100" r="4" class="center-dot" />
           <text id="arns-display-text" x="0" y="0">0</text>
           <text id="din-display-text" x="0" y="0">0</text>
@@ -200,7 +218,6 @@
       </div>
 
       <div id="pings-display">0</div>
-
       <div class="info-row">
         <div id="rotation-display">Α I 1</div>
         <div id="year-display">Year 0</div>
@@ -217,9 +234,21 @@
       <div class="legend-item no-color"><div class="legend-color-box" style="background-color: transparent; border: none;"></div><span>1 Sec =</span><span class="value">10 Pings</span></div>
       <div class="legend-item no-color"><div class="legend-color-box" style="background-color: transparent; border: none;"></div><span>1 Din =</span><span class="value">10 Secs</span></div>
       <div class="legend-item no-color"><div class="legend-color-box" style="background-color: transparent; border: none;"></div><span>1 Arn =</span><span class="value">50 Dins</span></div>
-      <div class="legend-item no-color"><div class="legend-color-box" style="background-color: transparent; border: none;"></div><span>1 Day =</span><span class="value">10 Arns</span></div>
-      <div class="legend-item no-color"><div class="legend-color-box" style="background-color: transparent; border: none;"></div><span>1 Month =</span><span class="value">50 Days</span></div>
-      <div class="legend-item no-color"><div class="legend-color-box" style="background-color: transparent; border: none;"></div><span>1 Season =</span><span class="value">5 Months</span></div>
+      <div class="legend-item no-color">
+  <div class="legend-color-box legend-color-day"></div>
+  <span class="color-day">1 Day =</span>
+  <span class="value color-day">10 Arns</span>
+</div>
+<div class="legend-item no-color">
+  <div class="legend-color-box legend-color-month"></div>
+  <span class="color-month">1 Month =</span>
+  <span class="value color-month">50 Days</span>
+</div>
+<div class="legend-item no-color">
+  <div class="legend-color-box legend-color-season"></div>
+  <span class="color-season">1 Season =</span>
+  <span class="value color-season">5 Months</span>
+</div>
       <div class="legend-item no-color"><div class="legend-color-box" style="background-color: transparent; border: none;"></div><span>1 Year =</span><span class="value">4 Seasons</span></div>
     </div>
   </div>
@@ -255,48 +284,6 @@
     const rotationEl = document.getElementById('rotation-display');
     const yearDisplayEl = document.getElementById('year-display');
     const pingsDisplayEl = document.getElementById('pings-display');
-	
-	function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
-      const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
-      return {
-        x: centerX + (radius * Math.cos(angleInRadians)),
-        y: centerY + (radius * Math.sin(angleInRadians))
-      };
-    }
-
-    function describeArc(x, y, radius, startAngle, endAngle) {
-      const start = polarToCartesian(x, y, radius, endAngle);
-      const end = polarToCartesian(x, y, radius, startAngle);
-      const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
-      const d = [
-        "M", start.x, start.y,
-        "A", radius, radius, 0, largeArcFlag, 0, end.x, end.y,
-        "L", x, y,
-        "L", start.x, start.y,
-        "Z"
-      ].join(" ");
-      return d;
-    }
-
-    function updateDaylightArc() {
-      // Coordinates for London (GMT). You can change these.
-      const lat = 51.5074;
-      const lon = -0.1278;
-
-      const times = SunCalc.getTimes(new Date(), lat, lon);
-      const sunrise = times.sunrise;
-      const sunset = times.sunset;
-
-      const sunriseHours = sunrise.getHours() + sunrise.getMinutes() / 60;
-      const sunsetHours = sunset.getHours() + sunset.getMinutes() / 60;
-
-      // Convert 24-hour time to 360 degrees for the clock face
-      const startAngle = (sunriseHours / 24) * 360;
-      const endAngle = (sunsetHours / 24) * 360;
-
-      const daylightArc = document.getElementById('daylight-arc');
-      daylightArc.setAttribute("d", describeArc(100, 100, 95, startAngle, endAngle));
-    }
 
     function drawNotches() {
       const arnsGroup = document.getElementById('arns-notches');
@@ -319,7 +306,6 @@
         line.setAttribute('stroke', '#F9FAFB');
         line.setAttribute('stroke-width', 2);
         arnsGroup.appendChild(line);
-		updateDaylightArc();
       }
 
       for (let i = 0; i < DINS_PER_ARN; i++) {
@@ -349,59 +335,49 @@
       const dins = (totalPings / (PINGS_PER_SEC * SECS_PER_DIN)) % DINS_PER_ARN;
       const arns = (totalPings / (PINGS_PER_SEC * SECS_PER_DIN * DINS_PER_ARN)) % ARNS_PER_DAY;
 
-      const angleSecs = (secs / SECS_PER_DIN) * 360;
-      const angleDins = (dins / DINS_PER_ARN) * 360;
-      const angleArns = (arns / ARNS_PER_DAY) * 360;
+      secsHand.style.transform = `rotateZ(${(secs / SECS_PER_DIN) * 360}deg)`;
+      dinsHand.style.transform = `rotateZ(${(dins / DINS_PER_ARN) * 360}deg)`;
+      arnsHand.style.transform = `rotateZ(${(arns / ARNS_PER_DAY) * 360}deg)`;
 
-      secsHand.style.transform = `rotateZ(${angleSecs}deg)`;
-      dinsHand.style.transform = `rotateZ(${angleDins}deg)`;
-      arnsHand.style.transform = `rotateZ(${angleArns}deg)`;
-
-      const pings = totalPings % PINGS_PER_SEC;
-      pingsDisplayEl.textContent = `${Math.floor(pings)}`;
+      pingsDisplayEl.textContent = `${Math.floor(totalPings % PINGS_PER_SEC)}`;
 
       const arnsDisplayRadius = 105;
       const arnsAngleRad = ((arns / ARNS_PER_DAY) * 360 - 90) * Math.PI / 180;
-      const x = 100 + arnsDisplayRadius * Math.cos(arnsAngleRad);
-      const y = 100 + arnsDisplayRadius * Math.sin(arnsAngleRad);
       arnsDisplayText.textContent = Math.floor(arns) + 1;
-      arnsDisplayText.setAttribute('x', x);
-      arnsDisplayText.setAttribute('y', y);
+      arnsDisplayText.setAttribute('x', 100 + arnsDisplayRadius * Math.cos(arnsAngleRad));
+      arnsDisplayText.setAttribute('y', 100 + arnsDisplayRadius * Math.sin(arnsAngleRad));
 
       const dinsDisplayRadius = 70;
       const dinsAngleRad = ((dins / DINS_PER_ARN) * 360 - 90) * Math.PI / 180;
-      const dinX = 100 + dinsDisplayRadius * Math.cos(dinsAngleRad);
-      const dinY = 100 + dinsDisplayRadius * Math.sin(dinsAngleRad);
       dinDisplayText.textContent = Math.floor(dins) + 1;
-      dinDisplayText.setAttribute('x', dinX);
-      dinDisplayText.setAttribute('y', dinY);
+      dinDisplayText.setAttribute('x', 100 + dinsDisplayRadius * Math.cos(dinsAngleRad));
+      dinDisplayText.setAttribute('y', 100 + dinsDisplayRadius * Math.sin(dinsAngleRad));
 
       const totalDays = Math.floor(totalPings / (PINGS_PER_SEC * SECS_PER_DIN * DINS_PER_ARN * ARNS_PER_DAY));
       const dayOfYear = totalDays % DAYS_IN_YEAR;
-
       const seasons = ['Α', 'Β', 'Γ', 'Δ'];
       const months = ['I', 'II', 'III', 'IV', 'V'];
       const daysPerSeason = DAYS_PER_MONTH * MONTHS_PER_SEASON;
-
       const seasonIndex = Math.floor(dayOfYear / daysPerSeason);
       const dayInSeason = dayOfYear % daysPerSeason;
       const monthIndex = Math.floor(dayInSeason / DAYS_PER_MONTH);
       const dayInMonth = (dayInSeason % DAYS_PER_MONTH) + 1;
-
-      rotationEl.textContent = `${seasons[seasonIndex]} ${months[monthIndex]} ${dayInMonth}`;
+      rotationEl.innerHTML = `<span class="color-season">${seasons[seasonIndex]}</span> <span class="color-month">${months[monthIndex]}</span> <span class="color-day">${dayInMonth}</span>`;
 
       const siderealYear = Math.floor(elapsed / SIDEREAL_YEAR_SECS);
       yearDisplayEl.textContent = `Year ${siderealYear}`;
-	  
-	  if (new Date().getHours() === 0 && new Date().getMinutes() === 0) {
-        updateDaylightArc(); // Add this to update the arc daily
-      }
 
       requestAnimationFrame(updateClock);
     }
 
     drawNotches();
     updateClock();
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js').then(() => {
+        console.log('Service Worker Registered');
+      });
+    }
   </script>
 </body>
 </html>
