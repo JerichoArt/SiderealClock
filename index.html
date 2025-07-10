@@ -67,12 +67,10 @@
       transform-origin: 100px 100px;
     }
 
-    .hand-arns { stroke: #34D399; stroke-width: 3; }
-    .hand-dins { stroke: #60A5FA; stroke-width: 2; }
+    .hand-nares { stroke: #34D399; stroke-width: 3; } .hand-dins { stroke: #60A5FA; stroke-width: 2; }
     .hand-secs { stroke: #F87171; stroke-width: 1.5; }
 
-    #arns-display-text {
-      font-size: 0.8em;
+    #nares-display-text { font-size: 0.8em;
       font-weight: bold;
       fill: #34D399;
       text-anchor: middle;
@@ -206,14 +204,11 @@
       <div class="clock-face-wrapper">
         <svg class="clock-face" viewBox="-20 -20 240 240">
           <circle cx="100" cy="100" r="95" fill="none" stroke="#374151" stroke-width="2" />
-          <g id="arns-notches"></g>
-          <g id="dins-notches"></g>
-          <line id="arns-hand" class="hand hand-arns" x1="100" y1="100" x2="100" y2="8" />
-          <line id="dins-hand" class="hand hand-dins" x1="100" y1="100" x2="100" y2="60" />
+          <g id="nares-notches"></g> <g id="dins-notches"></g>
+          <line id="nares-hand" class="hand hand-nares" x1="100" y1="100" x2="100" y2="8" /> <line id="dins-hand" class="hand hand-dins" x1="100" y1="100" x2="100" y2="60" />
           <line id="secs-hand" class="hand hand-secs" x1="100" y1="100" x2="100" y2="20" />
           <circle cx="100" cy="100" r="4" class="center-dot" />
-          <text id="arns-display-text" x="0" y="0">0</text>
-          <text id="din-display-text" x="0" y="0">0</text>
+          <text id="nares-display-text" x="0" y="0">0</text> <text id="din-display-text" x="0" y="0">0</text>
         </svg>
       </div>
 
@@ -229,16 +224,13 @@
       <div class="legend-item"><div class="legend-color-box color-pings"></div><span>1 Ping</span><span class="value" id="ping-length"></span></div>
       <div class="legend-item"><div class="legend-color-box color-red"></div><span>1 Sec</span><span class="value" id="sec-length"></span></div>
       <div class="legend-item"><div class="legend-color-box color-blue"></div><span>1 Din</span><span class="value" id="din-length"></span></div>
-      <div class="legend-item"><div class="legend-color-box color-green"></div><span>1 Arn</span><span class="value" id="arn-length"></span></div>
-      <hr style="border-color: #374151; margin: 10px 0;">
+      <div class="legend-item"><div class="legend-color-box color-green"></div><span>1 Nare</span><span class="value" id="nare-length"></span></div> <hr style="border-color: #374151; margin: 10px 0;">
       <div class="legend-item no-color"><div class="legend-color-box" style="background-color: transparent; border: none;"></div><span>1 Sec =</span><span class="value">10 Pings</span></div>
       <div class="legend-item no-color"><div class="legend-color-box" style="background-color: transparent; border: none;"></div><span>1 Din =</span><span class="value">10 Secs</span></div>
-      <div class="legend-item no-color"><div class="legend-color-box" style="background-color: transparent; border: none;"></div><span>1 Arn =</span><span class="value">50 Dins</span></div>
-      <div class="legend-item no-color">
+      <div class="legend-item no-color"><div class="legend-color-box" style="background-color: transparent; border: none;"></div><span>1 Nare =</span><span class="value">50 Dins</span></div> <div class="legend-item no-color">
   <div class="legend-color-box legend-color-day"></div>
   <span class="color-day">1 Day =</span>
-  <span class="value color-day">10 Arns</span>
-</div>
+  <span class="value color-day">10 Nares</span> </div>
 <div class="legend-item no-color">
   <div class="legend-color-box legend-color-month"></div>
   <span class="color-month">1 Month =</span>
@@ -261,38 +253,38 @@
     const DAYS_PER_MONTH = 50;
     const MONTHS_PER_SEASON = 5;
     const SEASONS_PER_YEAR = 4;
-    const ARNS_PER_DAY = 10;
-    const DINS_PER_ARN = 50;
+    const NARES_PER_DAY = 10; // Changed from ARNS_PER_DAY
+    const DINS_PER_NARE = 50; // Changed from DINS_PER_ARN
     const SECS_PER_DIN = 10;
     const PINGS_PER_SEC = 10;
 
-    const PING_LENGTH = SIDEREAL_YEAR_SECS / (DAYS_IN_YEAR * ARNS_PER_DAY * DINS_PER_ARN * SECS_PER_DIN * PINGS_PER_SEC);
+    const PING_LENGTH = SIDEREAL_YEAR_SECS / (DAYS_IN_YEAR * NARES_PER_DAY * DINS_PER_NARE * SECS_PER_DIN * PINGS_PER_SEC); // Changed
     const SEC_LENGTH = PING_LENGTH * PINGS_PER_SEC;
     const DIN_LENGTH = SEC_LENGTH * SECS_PER_DIN;
-    const ARN_LENGTH = DIN_LENGTH * DINS_PER_ARN;
+    const NARE_LENGTH = DIN_LENGTH * DINS_PER_NARE; // Changed from ARN_LENGTH
 
     document.getElementById('ping-length').textContent = `${PING_LENGTH.toFixed(2)} s`;
     document.getElementById('sec-length').textContent = `${SEC_LENGTH.toFixed(2)} s`;
     document.getElementById('din-length').textContent = `${DIN_LENGTH.toFixed(2)} s`;
-    document.getElementById('arn-length').textContent = `${ARN_LENGTH.toFixed(2)} s`;
+    document.getElementById('nare-length').textContent = `${NARE_LENGTH.toFixed(2)} s`; // Changed from arn-length
 
-    const arnsHand = document.getElementById('arns-hand');
+    const naresHand = document.getElementById('nares-hand'); // Changed from arnsHand
     const dinsHand = document.getElementById('dins-hand');
     const secsHand = document.getElementById('secs-hand');
-    const arnsDisplayText = document.getElementById('arns-display-text');
+    const naresDisplayText = document.getElementById('nares-display-text'); // Changed from arnsDisplayText
     const dinDisplayText = document.getElementById('din-display-text');
     const rotationEl = document.getElementById('rotation-display');
     const yearDisplayEl = document.getElementById('year-display');
     const pingsDisplayEl = document.getElementById('pings-display');
 
     function drawNotches() {
-      const arnsGroup = document.getElementById('arns-notches');
+      const naresGroup = document.getElementById('nares-notches'); // Changed from arnsGroup
       const dinsGroup = document.getElementById('dins-notches');
-      arnsGroup.innerHTML = '';
+      naresGroup.innerHTML = ''; // Changed from arnsGroup
       dinsGroup.innerHTML = '';
 
-      for (let i = 0; i < ARNS_PER_DAY; i++) {
-        const angle = (i / ARNS_PER_DAY) * 360 - 90;
+      for (let i = 0; i < NARES_PER_DAY; i++) { // Changed from ARNS_PER_DAY
+        const angle = (i / NARES_PER_DAY) * 360 - 90; // Changed from ARNS_PER_DAY
         const rad = angle * Math.PI / 180;
         const x1 = 100 + 87 * Math.cos(rad);
         const y1 = 100 + 87 * Math.sin(rad);
@@ -305,11 +297,11 @@
         line.setAttribute('y2', y2);
         line.setAttribute('stroke', '#F9FAFB');
         line.setAttribute('stroke-width', 2);
-        arnsGroup.appendChild(line);
+        naresGroup.appendChild(line); // Changed from arnsGroup
       }
 
-      for (let i = 0; i < DINS_PER_ARN; i++) {
-        const angle = (i / DINS_PER_ARN) * 360 - 90;
+      for (let i = 0; i < DINS_PER_NARE; i++) { // Changed from DINS_PER_ARN
+        const angle = (i / DINS_PER_NARE) * 360 - 90; // Changed from DINS_PER_ARN
         const rad = angle * Math.PI / 180;
         const x1 = 100 + 45 * Math.cos(rad);
         const y1 = 100 + 45 * Math.sin(rad);
@@ -332,28 +324,28 @@
       const totalPings = elapsed / PING_LENGTH;
 
       const secs = (totalPings / PINGS_PER_SEC) % SECS_PER_DIN;
-      const dins = (totalPings / (PINGS_PER_SEC * SECS_PER_DIN)) % DINS_PER_ARN;
-      const arns = (totalPings / (PINGS_PER_SEC * SECS_PER_DIN * DINS_PER_ARN)) % ARNS_PER_DAY;
+      const dins = (totalPings / (PINGS_PER_SEC * SECS_PER_DIN)) % DINS_PER_NARE; // Changed from DINS_PER_ARN
+      const nares = (totalPings / (PINGS_PER_SEC * SECS_PER_DIN * DINS_PER_NARE)) % NARES_PER_DAY; // Changed from ARNS_PER_DAY
 
       secsHand.style.transform = `rotateZ(${(secs / SECS_PER_DIN) * 360}deg)`;
-      dinsHand.style.transform = `rotateZ(${(dins / DINS_PER_ARN) * 360}deg)`;
-      arnsHand.style.transform = `rotateZ(${(arns / ARNS_PER_DAY) * 360}deg)`;
+      dinsHand.style.transform = `rotateZ(${(dins / DINS_PER_NARE) * 360}deg)`; // Changed from DINS_PER_ARN
+      naresHand.style.transform = `rotateZ(${(nares / NARES_PER_DAY) * 360}deg)`; // Changed from ARNS_PER_DAY, arnsHand
 
       pingsDisplayEl.textContent = `${Math.floor(totalPings % PINGS_PER_SEC)}`;
 
-      const arnsDisplayRadius = 105;
-      const arnsAngleRad = ((arns / ARNS_PER_DAY) * 360 - 90) * Math.PI / 180;
-      arnsDisplayText.textContent = Math.floor(arns) + 1;
-      arnsDisplayText.setAttribute('x', 100 + arnsDisplayRadius * Math.cos(arnsAngleRad));
-      arnsDisplayText.setAttribute('y', 100 + arnsDisplayRadius * Math.sin(arnsAngleRad));
+      const naresDisplayRadius = 105; // Changed from arnsDisplayRadius
+      const naresAngleRad = ((nares / NARES_PER_DAY) * 360 - 90) * Math.PI / 180; // Changed from ARNS_PER_DAY, arnsAngleRad
+      naresDisplayText.textContent = Math.floor(nares) + 1; // Changed from arnsDisplayText
+      naresDisplayText.setAttribute('x', 100 + naresDisplayRadius * Math.cos(naresAngleRad)); // Changed from arnsDisplayText, arnsDisplayRadius, arnsAngleRad
+      naresDisplayText.setAttribute('y', 100 + naresDisplayRadius * Math.sin(naresAngleRad)); // Changed from arnsDisplayText, arnsDisplayRadius, arnsAngleRad
 
       const dinsDisplayRadius = 70;
-      const dinsAngleRad = ((dins / DINS_PER_ARN) * 360 - 90) * Math.PI / 180;
+      const dinsAngleRad = ((dins / DINS_PER_NARE) * 360 - 90) * Math.PI / 180; // Changed from DINS_PER_ARN
       dinDisplayText.textContent = Math.floor(dins) + 1;
       dinDisplayText.setAttribute('x', 100 + dinsDisplayRadius * Math.cos(dinsAngleRad));
       dinDisplayText.setAttribute('y', 100 + dinsDisplayRadius * Math.sin(dinsAngleRad));
 
-      const totalDays = Math.floor(totalPings / (PINGS_PER_SEC * SECS_PER_DIN * DINS_PER_ARN * ARNS_PER_DAY));
+      const totalDays = Math.floor(totalPings / (PINGS_PER_SEC * SECS_PER_DIN * DINS_PER_NARE * NARES_PER_DAY)); // Changed from DINS_PER_ARN * ARNS_PER_DAY
       const dayOfYear = totalDays % DAYS_IN_YEAR;
       const seasons = ['Α', 'Β', 'Γ', 'Δ'];
       const months = ['I', 'II', 'III', 'IV', 'V'];
