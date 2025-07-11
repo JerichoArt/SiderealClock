@@ -320,7 +320,7 @@
 
     function updateClock() {
       const nowDate = new Date();
-      const elapsed = (nowDate - EPOCH) / 1000;
+      const elapsed = (Date.now() - EPOCH.getTime()) / 1000;
       const totalPings = elapsed / PING_LENGTH;
 
       const secs = (totalPings / PINGS_PER_SEC) % SECS_PER_DIN;
