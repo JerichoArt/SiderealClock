@@ -40,3 +40,6 @@ The clock will automatically start running, displaying the current time accordin
 * **JavaScript:** Powers the clock's logic, animations, and time calculations.  
 * **SVG:** Used for drawing the dynamic clock face and hands.  
 * **PWA:** Utilizes `manifest.json` and `service-worker.js` for installability and offline support.
+
+## **Customization**
+You can modify the time unit definitions and other constants in the JavaScript section of index.html to experiment with different temporal systems.
