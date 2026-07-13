@@ -353,13 +353,13 @@
 
       const naresDisplayRadius = 105; // Changed from arnsDisplayRadius
       const naresAngleRad = ((nares / NARES_PER_DAY) * 360 - 90) * Math.PI / 180; // Changed from ARNS_PER_DAY, arnsAngleRad
-      naresDisplayText.textContent = Math.floor(nares) + 1; // Changed from arnsDisplayText
+      naresDisplayText.textContent = Math.floor(nares); // Changed from arnsDisplayText and removed +1
       naresDisplayText.setAttribute('x', 100 + naresDisplayRadius * Math.cos(naresAngleRad)); // Changed from arnsDisplayText, arnsDisplayRadius, arnsAngleRad
       naresDisplayText.setAttribute('y', 100 + naresDisplayRadius * Math.sin(naresAngleRad)); // Changed from arnsDisplayText, arnsDisplayRadius, arnsAngleRad
 
       const dinsDisplayRadius = 70;
       const dinsAngleRad = ((dins / DINS_PER_NARE) * 360 - 90) * Math.PI / 180; // Changed from DINS_PER_ARN
-      dinDisplayText.textContent = Math.floor(dins) + 1;
+      dinDisplayText.textContent = Math.floor(dins); // Removed +1
       dinDisplayText.setAttribute('x', 100 + dinsDisplayRadius * Math.cos(dinsAngleRad));
       dinDisplayText.setAttribute('y', 100 + dinsDisplayRadius * Math.sin(dinsAngleRad));
 
