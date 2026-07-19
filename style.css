@@ -1,0 +1,245 @@
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #0F172A;
+  color: #F9FAFB;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+  overflow: hidden;
+}
+
+.main-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  margin-bottom: 20px;
+}
+
+@media (min-width: 768px) {
+  .main-content-wrapper {
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-start;
+  }
+}
+
+.clock-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Expanded boundary container frame box to support the extended tracking arcs */
+.clock-face-wrapper {
+  position: relative;
+  width: 340px;
+  height: 340px;
+  border-radius: 50%;
+  background-color: #111827;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #374151;
+}
+
+.clock-face {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.hand {
+  stroke-linecap: round;
+  transform-origin: 100px 100px;
+}
+
+.hand-nares { stroke: #34D399; stroke-width: 3; } 
+.hand-dins { stroke: #60A5FA; stroke-width: 2; }
+.hand-secs { stroke: #F87171; stroke-width: 1.5; }
+
+#solar-horizon-track, #work-window-track {
+  transform-origin: 100px 100px;
+  background-color: #1E293B; /* Dark slate base track background */
+}
+
+#top-marker {
+  stroke-linecap: round;
+}
+
+#din-display-text {
+  font-size: 0.65rem;
+  font-weight: 800;
+  fill: #60A5FA;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.center-dot {
+  fill: #F9FAFB;
+  stroke: #374151;
+  stroke-width: 1;
+}
+
+#rotation-display, #year-display, #pings-display {
+  font-size: 1.25rem;
+  font-weight: bold;
+  padding: 0.75rem 1.25rem;
+  background-color: #111827;
+  border: 2px solid #374151;
+  border-radius: 0.5rem;
+  box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+  text-align: center;
+  white-space: nowrap;
+}
+
+#year-display { color: #065F46; }
+.color-season { color: #047857; }
+.color-month { color: #059669; margin: 0 4px; }
+.color-day { color: #34D399; }
+
+.info-row {
+  display: flex;
+  gap: 0.25rem;
+  justify-content: center;
+}
+
+#pings-display {
+  color: #FFD700;
+  font-size: 1rem;
+  padding: 0.25rem 0.5rem;
+  min-width: 60px;
+}
+
+.calendar-link { text-decoration: none; }
+
+#favicon-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  background-color: #111827;
+  border: 2px solid #374151;
+  border-radius: 0.5rem;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
+}
+
+.calendar-icon {
+  width: 45px;
+  height: 45px;
+  object-fit: contain;
+  display: block;
+}
+
+.legend-container {
+  background-color: #111827;
+  border: 2px solid #374151;
+  border-radius: 0.5rem;
+  padding: 15px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 320px;
+}
+
+.legend-container h2 {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  font-weight: bold;
+  margin-bottom: 10px;
+  margin-top: 5px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+  color: #e2e8f0;
+}
+
+.legend-item span:not(.value) {
+  flex-grow: 1;
+  text-align: left;
+}
+
+.legend-item .value {
+  font-family: monospace;
+  font-weight: bold;
+  color: #cbd5e1;
+}
+
+.legend-color-box {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  margin-right: 10px;
+  border: 1px solid #374151;
+  flex-shrink: 0;
+}
+
+.bg-pings  { background-color: #FFD700; }
+.bg-red    { background-color: #F87171; }
+.bg-blue   { background-color: #60A5FA; }
+.bg-green  { background-color: #34D399; border-color: #2bb885; }
+.bg-day    { background-color: #34D399; border-color: #2bb885; }
+.bg-month  { background-color: #059669; border-color: #047d57; }
+.bg-season { background-color: #047857; border-color: #035e44; }
+.bg-year   { background-color: #065F46; border-color: #044e39; }
+
+.legend-divider {
+  height: 1px;
+  background: linear-gradient(to right, rgba(148, 163, 184, 0.3), transparent);
+  margin: 15px 0;
+  border: none;
+}
+
+.control-box {
+  background-color: #111827;
+  border: 1px solid #374151;
+  padding: 6px 12px;
+  border-radius: 0.375rem;
+}
+
+.notch-label {
+  font-size: 0.45rem;
+  fill: #6B7280;
+  text-anchor: middle;
+  dominant-baseline: central;
+  font-weight: bold;
+}
+
+.outer-notch-label {
+  font-size: 0.4rem;
+  fill: #F87171;
+  text-anchor: middle;
+  dominant-baseline: central;
+  font-weight: bold;
+}
+
+/* Color Mappings for Environmental Legend Elements */
+.bg-daylight { 
+  background-color: #FEF08A; 
+  border-color: #CA8A04; 
+}
+.bg-workwindow { 
+  background-color: #34D399; 
+  border-color: #059669; 
+}
+
+/* Optional subtle glows to help tie them to the neon ring aesthetics */
+.shadow-glow-yellow {
+  box-shadow: 0 0 4px rgba(254, 240, 138, 0.4);
+}
+.shadow-glow-green {
+  box-shadow: 0 0 4px rgba(52, 211, 153, 0.4);
+}
