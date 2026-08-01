@@ -21,7 +21,7 @@ let MY_LONG = parseFloat(localStorage.getItem('user_long')) || -0.1278;
 document.getElementById('ping-length').textContent = `${PING_LENGTH.toFixed(2)} s`;
 document.getElementById('sec-length').textContent = `${SEC_LENGTH.toFixed(2)} s`;
 document.getElementById('din-length').textContent = `${DIN_LENGTH.toFixed(2)} s`;
-document.getElementById('nare-length').textContent = `${NARE_LENGTH.toFixed(2)} s`; 
+document.getElementById('nare-length').textContent = '≈ 52m';
 
 const naresHand = document.getElementById('nares-hand'); 
 const dinsHand = document.getElementById('dins-hand');
