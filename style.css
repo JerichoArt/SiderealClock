@@ -70,7 +70,7 @@ body {
   transform-origin: 100px 100px;
 }
 
-.hand-nares { stroke: #34D399; stroke-width: 3; } 
+.hand-hours { stroke: #34D399; stroke-width: 3; } 
 .hand-dins { stroke: #60A5FA; stroke-width: 2; }
 .hand-secs { stroke: #F87171; stroke-width: 1.5; }
 
@@ -261,8 +261,20 @@ body {
 }
 
 .outer-notch-label {
-  font-size: 0.4rem;
+  font-size: 0.45rem;
   fill: #F87171;
+  text-anchor: middle;
+  dominant-baseline: central;
+  font-weight: bold;
+}
+
+/* --- Sidereal calendar additions --- */
+.color-week { color: #FDE68A; margin-left: 6px; }
+.legend-wide { grid-column: 1 / -1; }
+.bg-week { background-color: #6EE7B7; border-color: #34D399; }
+.hour-label {
+  font-size: 0.5rem;
+  fill: #D1D5DB;
   text-anchor: middle;
   dominant-baseline: central;
   font-weight: bold;

@@ -1,244 +1,192 @@
-const SIDEREAL_YEAR_SECS = (365 * 86400) + (5 * 3600) + (48 * 60) + 45;
-const EPOCH = new Date('2000-01-01T00:00:00.000Z');
+// Sidereal Clock: draws the dial and shows the date. All time and calendar maths
+// lives in sidereal-core.js (loaded first in index.html).
+const S = SiderealCore;
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const DAY_MS = 86400000;
 
-const DAYS_IN_YEAR = 1000;
-const DAYS_PER_MONTH = 50;
-const MONTHS_PER_SEASON = 5;
-const SEASONS_PER_YEAR = 4;
-const NARES_PER_DAY = 10; 
-const DINS_PER_NARE = 50; 
-const SECS_PER_DIN = 10;
-const PINGS_PER_SEC = 10;
-
-const PING_LENGTH = SIDEREAL_YEAR_SECS / (DAYS_IN_YEAR * NARES_PER_DAY * DINS_PER_NARE * SECS_PER_DIN * PINGS_PER_SEC); 
-const SEC_LENGTH = PING_LENGTH * PINGS_PER_SEC;
-const DIN_LENGTH = SEC_LENGTH * SECS_PER_DIN;
-const NARE_LENGTH = DIN_LENGTH * DINS_PER_NARE; 
-
-let MY_LAT = parseFloat(localStorage.getItem('user_lat')) || 51.5074; 
+let MY_LAT = parseFloat(localStorage.getItem('user_lat')) || 51.5074;
 let MY_LONG = parseFloat(localStorage.getItem('user_long')) || -0.1278;
 
-document.getElementById('ping-length').textContent = `${PING_LENGTH.toFixed(2)} s`;
-document.getElementById('sec-length').textContent = `${SEC_LENGTH.toFixed(2)} s`;
-document.getElementById('din-length').textContent = `${DIN_LENGTH.toFixed(2)} s`;
-document.getElementById('nare-length').textContent = '≈ 52 m';
+const $ = id => document.getElementById(id);
 
-const naresHand = document.getElementById('nares-hand'); 
-const dinsHand = document.getElementById('dins-hand');
-const secsHand = document.getElementById('secs-hand');
-const dinDisplayText = document.getElementById('din-display-text');
-const rotationEl = document.getElementById('rotation-display');
-const yearDisplayEl = document.getElementById('year-display');
-const pingsDisplayEl = document.getElementById('pings-display');
+// Legend values come straight from the constants, so they can never drift out of step.
+$('ping-length').textContent = `${S.PING_SECS.toFixed(2)} s`;
+$('sec-length').textContent = `${S.SEC_SECS.toFixed(1)} s`;
+$('din-length').textContent = `${S.DIN_SECS} s`;
+$('hour-length').textContent = `${S.HOUR_SECS / 60} min`;
 
-const solarHorizonTrack = document.getElementById('solar-horizon-track');
-const workWindowTrack = document.getElementById('work-window-track');
+const hoursHand = $('hours-hand');
+const dinsHand = $('dins-hand');
+const secsHand = $('secs-hand');
+const dinDisplayText = $('din-display-text');
+const rotationEl = $('rotation-display');
+const yearDisplayEl = $('year-display');
+const pingsDisplayEl = $('pings-display');
+const solarHorizonTrack = $('solar-horizon-track');
+const workWindowTrack = $('work-window-track');
 
-// Cross-tab Synchronization Listener (Updates coordinates & lock parameters automatically)
-window.addEventListener('storage', (e) => {
+// Keep location and the UK work-window lock in step with the calendar app in other tabs.
+window.addEventListener('storage', e => {
   if (e.key === 'user_lat') MY_LAT = parseFloat(e.newValue) || 51.5074;
   if (e.key === 'user_long') MY_LONG = parseFloat(e.newValue) || -0.1278;
+  lastRingKey = ''; // force the rings to redraw
 });
 
+// ---- Dial drawing ------------------------------------------------------
+function polar(r, angleDeg) {
+  const rad = (angleDeg - 90) * Math.PI / 180;
+  return [100 + r * Math.cos(rad), 100 + r * Math.sin(rad)];
+}
+
+function addLine(group, r1, r2, angleDeg, stroke, width) {
+  const [x1, y1] = polar(r1, angleDeg);
+  const [x2, y2] = polar(r2, angleDeg);
+  const line = document.createElementNS(SVG_NS, 'line');
+  line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+  line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+  line.setAttribute('stroke', stroke);
+  line.setAttribute('stroke-width', width);
+  group.appendChild(line);
+}
+
+function addLabel(group, r, angleDeg, cls, text) {
+  const [x, y] = polar(r, angleDeg);
+  const el = document.createElementNS(SVG_NS, 'text');
+  el.setAttribute('x', x); el.setAttribute('y', y);
+  el.setAttribute('class', cls);
+  el.textContent = text;
+  group.appendChild(el);
+}
+
 function drawNotches() {
-  const naresGroup = document.getElementById('nares-notches'); 
-  const naresLabelsGroup = document.getElementById('nares-labels');
-  const dinsGroup = document.getElementById('dins-notches');
-  const secsGroup = document.getElementById('secs-notches');
-  const secsLabelsGroup = document.getElementById('secs-labels');
-  
-  naresGroup.innerHTML = ''; 
-  naresLabelsGroup.innerHTML = '';
-  dinsGroup.innerHTML = '';
-  secsGroup.innerHTML = '';
-  secsLabelsGroup.innerHTML = '';
+  const [hoursGroup, hoursLabels, dinsGroup, secsGroup, secsLabels] =
+    ['hours-notches', 'hours-labels', 'dins-notches', 'secs-notches', 'secs-labels'].map($);
+  [hoursGroup, hoursLabels, dinsGroup, secsGroup, secsLabels].forEach(g => { g.innerHTML = ''; });
 
-  for (let i = 0; i < NARES_PER_DAY; i++) { 
-    const angle = (i / NARES_PER_DAY) * 360 - 90; 
-    const rad = angle * Math.PI / 180;
-    const x1 = 100 + 31 * Math.cos(rad);
-    const y1 = 100 + 31 * Math.sin(rad);
-    const x2 = 100 + 35 * Math.cos(rad);
-    const y2 = 100 + 35 * Math.sin(rad);
-    
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('x1', x1);
-    line.setAttribute('y1', y1);
-    line.setAttribute('x2', x2);
-    line.setAttribute('y2', y2);
-    line.setAttribute('stroke', '#F9FAFB');
-    line.setAttribute('stroke-width', 2);
-    naresGroup.appendChild(line);
-
-    const textX = 100 + 26 * Math.cos(rad);
-    const textY = 100 + 26 * Math.sin(rad);
-    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    text.setAttribute('x', textX);
-    text.setAttribute('y', textY);
-    text.setAttribute('class', 'notch-label');
-    text.textContent = i; 
-    naresLabelsGroup.appendChild(text);
+  // Outer dial, next to the daylight and work bars: 24 hours, numbered 0, 3, 6 ... 21.
+  for (let i = 0; i < S.HOURS_PER_DAY; i++) {
+    const angle = (i / S.HOURS_PER_DAY) * 360;
+    const numbered = i % 3 === 0;
+    addLine(hoursGroup, numbered ? 89 : 92, 96, angle, numbered ? '#F9FAFB' : '#9CA3AF', numbered ? 2 : 1);
+    if (numbered) addLabel(hoursLabels, 82.5, angle, 'hour-label', i);
   }
 
-  for (let i = 0; i < DINS_PER_NARE; i++) { 
-    const angle = (i / DINS_PER_NARE) * 360 - 90; 
-    const rad = angle * Math.PI / 180;
-    const isProminent = (i % 10 === 0);
-    
-    const x1 = 100 + (isProminent ? 48 : 51) * Math.cos(rad);
-    const y1 = 100 + (isProminent ? 48 : 51) * Math.sin(rad);
-    const x2 = 100 + 55 * Math.cos(rad);
-    const y2 = 100 + 55 * Math.sin(rad);
-    
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('x1', x1);
-    line.setAttribute('y1', y1);
-    line.setAttribute('x2', x2);
-    line.setAttribute('y2', y2);
-    line.setAttribute('stroke', isProminent ? '#F9FAFB' : '#9CA3AF');
-    line.setAttribute('stroke-width', isProminent ? 2 : 1);
-    dinsGroup.appendChild(line);
+  // Middle dial: 50 dins, prominent every 10.
+  for (let i = 0; i < S.DINS_PER_HOUR; i++) {
+    const angle = (i / S.DINS_PER_HOUR) * 360;
+    const big = i % 10 === 0;
+    addLine(dinsGroup, big ? 64 : 67, 71, angle, big ? '#F9FAFB' : '#9CA3AF', big ? 2 : 1);
   }
 
-  const TOTAL_OUTER_NOTCHES = 100;
-  for (let i = 0; i < TOTAL_OUTER_NOTCHES; i++) {
-    const angle = (i / TOTAL_OUTER_NOTCHES) * 360 - 90;
-    const rad = angle * Math.PI / 180;
-    const isProminent = (i % 10 === 0);
-    
-    const x1 = 100 + (isProminent ? 89 : 92) * Math.cos(rad);
-    const y1 = 100 + (isProminent ? 89 : 92) * Math.sin(rad);
-    const x2 = 100 + 96 * Math.cos(rad);
-    const y2 = 100 + 96 * Math.sin(rad);
-    
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('x1', x1);
-    line.setAttribute('y1', y1);
-    line.setAttribute('x2', x2);
-    line.setAttribute('y2', y2);
-    line.setAttribute('stroke', isProminent ? '#F9FAFB' : '#4B5563');
-    line.setAttribute('stroke-width', isProminent ? 1.5 : 0.75);
-    secsGroup.appendChild(line);
-
-    if (isProminent) {
-      const textX = 100 + 81 * Math.cos(rad);
-      const textY = 100 + 81 * Math.sin(rad);
-      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      text.setAttribute('x', textX);
-      text.setAttribute('y', textY);
-      text.setAttribute('class', 'outer-notch-label');
-      text.textContent = i.toString().padStart(2, '0');
-      secsLabelsGroup.appendChild(text);
-    }
+  // Inner dial: 10 secs, each labelled with its ping count (00, 10 ... 90).
+  for (let i = 0; i < S.SECS_PER_DIN; i++) {
+    const angle = (i / S.SECS_PER_DIN) * 360;
+    const big = i === 0;
+    addLine(secsGroup, big ? 42 : 45, 50, angle, big ? '#F9FAFB' : '#9CA3AF', big ? 2 : 1.5);
+    addLabel(secsLabels, 37, angle, 'outer-notch-label', String(i * S.PINGS_PER_SEC).padStart(2, '0'));
   }
 }
 
-function updateEnvironmentalTimelines(now) {
-  const targetTimezoneOffsetHours = MY_LONG / 15;
-  const localDecimalHour = (now.getUTCHours() + (now.getUTCMinutes() / 60) + (now.getUTCSeconds() / 3600) + targetTimezoneOffsetHours + 24) % 24;
-  
-  // 1. Solar Ring Processing
-  const cSolar = 2 * Math.PI * 112;
-  try {
-    const sunTimes = SunCalc.getTimes(now, MY_LAT, MY_LONG);
-    const sunriseDec = (sunTimes.sunrise.getUTCHours() + sunTimes.sunrise.getUTCMinutes() / 60 + targetTimezoneOffsetHours + 24) % 24;
-    const sunsetDec = (sunTimes.sunset.getUTCHours() + sunTimes.sunset.getUTCMinutes() / 60 + targetTimezoneOffsetHours + 24) % 24;
-    
-    let dayLengthHours = sunsetDec - sunriseDec;
-    if (dayLengthHours < 0) dayLengthHours += 24;
+// ---- Daylight and work-window rings --------------------------------------
+// Both rings sit on the same 24-hour scale as the hour hand (midnight at the top),
+// so the hand points into the arc whenever the moment is inside it.
+const C_SOLAR = 2 * Math.PI * 112;
+const C_WORK = 2 * Math.PI * 104;
+let lastRingKey = '';
 
-    const dayDash = (dayLengthHours / 24) * cSolar;
-    const nightDash = cSolar - dayDash;
-    
-    solarHorizonTrack.style.strokeDasharray = `${dayDash} ${nightDash}`;
-    
-    const solarStartAngle = (sunriseDec / 24) * 360;
-    const currentAngle = (localDecimalHour / 24) * 360;
-    solarHorizonTrack.style.transform = `rotate(${-90 + solarStartAngle - currentAngle}deg)`;
+function localHour(date) {
+  const ms = date.getTime() + (MY_LONG / 15) * 3600000;
+  return (((ms % DAY_MS) + DAY_MS) % DAY_MS) / 3600000;
+}
+
+function setArc(el, circumference, startHour, lengthHours) {
+  const dash = (lengthHours / 24) * circumference;
+  el.style.strokeDasharray = `${dash} ${circumference - dash}`;
+  el.style.transform = `rotate(${-90 + (startHour / 24) * 360}deg)`;
+}
+
+// London's offset from UTC right now (0 in winter, 1 in summer), worked out directly.
+function londonOffsetHours(now) {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/London', hourCycle: 'h23',
+    year: 'numeric', month: 'numeric', day: 'numeric',
+    hour: 'numeric', minute: 'numeric', second: 'numeric'
+  }).formatToParts(now);
+  const g = type => Number(parts.find(p => p.type === type).value);
+  const wall = Date.UTC(g('year'), g('month') - 1, g('day'), g('hour'), g('minute'), g('second'));
+  return (wall - Math.floor(now.getTime() / 1000) * 1000) / 3600000;
+}
+
+function updateRings(now) {
+  const lockToUK = localStorage.getItem('lock_to_uk') === 'true';
+  const key = `${Math.floor(now.getTime() / 60000)}|${MY_LAT}|${MY_LONG}|${lockToUK}`;
+  if (key === lastRingKey) return;       // the rings only need redrawing once a minute
+  lastRingKey = key;
+
+  // Daylight
+  try {
+    const t = SunCalc.getTimes(now, MY_LAT, MY_LONG);
+    if (isNaN(t.sunrise.getTime()) || isNaN(t.sunset.getTime())) {
+      // Polar day or night: fill the ring or leave it empty.
+      const up = SunCalc.getPosition(now, MY_LAT, MY_LONG).altitude > 0;
+      setArc(solarHorizonTrack, C_SOLAR, 0, up ? 24 : 0);
+    } else {
+      const rise = localHour(t.sunrise);
+      setArc(solarHorizonTrack, C_SOLAR, rise, (localHour(t.sunset) - rise + 24) % 24);
+    }
     solarHorizonTrack.setAttribute('stroke', '#FEF08A');
   } catch (e) {
-    solarHorizonTrack.style.strokeDasharray = "none";
+    solarHorizonTrack.style.strokeDasharray = 'none';
     solarHorizonTrack.setAttribute('stroke', '#1E293B');
   }
 
-  // 2. Work Window Processing (Directly syncing to the calendar storage token 'lock_to_uk')
-  const cWork = 2 * Math.PI * 104;
-  const lockToUK = localStorage.getItem('lock_to_uk') === 'true';
-  
-  let startHour = 9;
-  let endHour = 17;
-
-  if (lockToUK) {
-    const ukTime = new Date(now.toLocaleString("en-US", {timeZone: "Europe/London"}));
-    
-    // Calculate the difference between your selected longitudinal zone and true London time
-    const localTime = new Date(now.getTime() + (targetTimezoneOffsetHours * 3600000));
-    const ukOffset = (localTime.getTime() - ukTime.getTime()) / 3600000;
-    
-    startHour = (9 + ukOffset + 24) % 24;
-    endHour = (17 + ukOffset + 24) % 24;
-  }
-
-  let workLengthHours = endHour - startHour;
-  if (workLengthHours < 0) workLengthHours += 24;
-
-  const workDash = (workLengthHours / 24) * cWork;
-  const restDash = cWork - workDash;
-
-  workWindowTrack.style.strokeDasharray = `${workDash} ${restDash}`;
-  
-  const workStartAngle = (startHour / 24) * 360;
-  const currentWorkAngle = (localDecimalHour / 24) * 360;
-  workWindowTrack.style.transform = `rotate(${-90 + workStartAngle - currentWorkAngle}deg)`;
+  // Work window: 9 to 5 local solar time, or UK 9 to 5 shown at this longitude.
+  let start = 9;
+  if (lockToUK) start = (9 - londonOffsetHours(now) + MY_LONG / 15 + 24) % 24;
+  setArc(workWindowTrack, C_WORK, start, 8);
   workWindowTrack.setAttribute('stroke', '#34D399');
 }
 
+// ---- Main loop -----------------------------------------------------------
 function updateClock() {
   const now = new Date();
-  const elapsed = (now.getTime() - EPOCH.getTime()) / 1000;
-  const totalPings = elapsed / PING_LENGTH;
+  const c = S.fromDate(now, MY_LONG);
 
-  const secs = (totalPings / PINGS_PER_SEC) % SECS_PER_DIN;
-  const dins = (totalPings / (PINGS_PER_SEC * SECS_PER_DIN)) % DINS_PER_NARE; 
-  const nares = (totalPings / (PINGS_PER_SEC * SECS_PER_DIN * DINS_PER_NARE)) % NARES_PER_DAY; 
+  hoursHand.style.transform = `rotateZ(${(c.hands.hours / S.HOURS_PER_DAY) * 360}deg)`;
+  dinsHand.style.transform = `rotateZ(${(c.hands.dins / S.DINS_PER_HOUR) * 360}deg)`;
+  secsHand.style.transform = `rotateZ(${(c.hands.secs / S.SECS_PER_DIN) * 360}deg)`;
 
-  secsHand.style.transform = `rotateZ(${(secs / SECS_PER_DIN) * 360}deg)`;
-  dinsHand.style.transform = `rotateZ(${(dins / DINS_PER_NARE) * 360}deg)`; 
-  naresHand.style.transform = `rotateZ(${(nares / NARES_PER_DAY) * 360}deg)`; 
+  pingsDisplayEl.textContent = c.time.ping;
 
-  pingsDisplayEl.textContent = `${Math.floor(totalPings % PINGS_PER_SEC)}`;
+  // Floating din number, just outside the dins dial.
+  const [tx, ty] = polar(76, (c.hands.dins / S.DINS_PER_HOUR) * 360);
+  dinDisplayText.textContent = c.time.din;
+  dinDisplayText.setAttribute('x', tx);
+  dinDisplayText.setAttribute('y', ty);
 
-  const dinsDisplayRadius = 63;
-  const dinsAngleRad = ((dins / DINS_PER_NARE) * 360 - 90) * Math.PI / 180; 
-  dinDisplayText.textContent = Math.floor(dins); 
-  dinDisplayText.setAttribute('x', 100 + dinsDisplayRadius * Math.cos(dinsAngleRad));
-  dinDisplayText.setAttribute('y', 100 + dinsDisplayRadius * Math.sin(dinsAngleRad));
+  if (c.isReturnDay) {
+    rotationEl.innerHTML = `<span class="color-season">Return</span> <span class="color-day">${c.returnDay}/${c.returnDaysInYear}</span>`;
+    rotationEl.title = `Return day ${c.returnDay} of ${c.returnDaysInYear}`;
+  } else {
+    rotationEl.innerHTML =
+      `<span class="color-season">${c.season}</span> <span class="color-month">${c.month}</span> ` +
+      `<span class="color-day">${c.day}</span><span class="color-week">${c.weekdayGlyph}</span>`;
+    rotationEl.title = `Season ${c.season}, month ${c.month}, day ${c.day}, ${c.weekday}`;
+  }
+  yearDisplayEl.textContent = `Year ${c.year}`;
 
-  const totalDays = Math.floor(totalPings / (PINGS_PER_SEC * SECS_PER_DIN * DINS_PER_NARE * NARES_PER_DAY)); 
-  const dayOfYear = totalDays % DAYS_IN_YEAR;
-  const seasons = ['Α', 'Β', 'Γ', 'Δ'];
-  const months = ['I', 'II', 'III', 'IV', 'V'];
-  const daysPerSeason = DAYS_PER_MONTH * MONTHS_PER_SEASON;
-  const seasonIndex = Math.floor(dayOfYear / daysPerSeason);
-  const dayInSeason = dayOfYear % daysPerSeason;
-  const monthIndex = Math.floor(dayInSeason / DAYS_PER_MONTH);
-  const dayInMonth = (dayInSeason % DAYS_PER_MONTH) + 1;
-  rotationEl.innerHTML = `<span class="color-season">${seasons[seasonIndex]}</span> <span class="color-month">${months[monthIndex]}</span> <span class="color-day">${dayInMonth}</span>`;
-
-  const siderealYear = Math.floor(elapsed / SIDEREAL_YEAR_SECS);
-  yearDisplayEl.textContent = `Year ${siderealYear}`;
-
-  updateEnvironmentalTimelines(now);
-
+  updateRings(now);
   requestAnimationFrame(updateClock);
 }
 
-if (!localStorage.getItem('user_lat') && "geolocation" in navigator) {
-  navigator.geolocation.getCurrentPosition((position) => {
+// ---- Location (shared with the calendar app through localStorage) ---------
+if (!localStorage.getItem('user_lat') && 'geolocation' in navigator) {
+  navigator.geolocation.getCurrentPosition(position => {
     MY_LAT = position.coords.latitude;
     MY_LONG = position.coords.longitude;
     localStorage.setItem('user_lat', MY_LAT);
     localStorage.setItem('user_long', MY_LONG);
+    lastRingKey = '';
   });
 }
 
