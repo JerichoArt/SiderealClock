@@ -1,4 +1,4 @@
-// Sidereal Clock: draws the dial and shows the date. All time and calendar maths
+// Sidereal Clock: one planet-wide time. Draws the dial and shows the date. All time and calendar maths
 // lives in sidereal-core.js (loaded first in index.html).
 const S = SiderealCore;
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -22,13 +22,27 @@ const dinDisplayText = $('din-display-text');
 const rotationEl = $('rotation-display');
 const yearDisplayEl = $('year-display');
 const pingsDisplayEl = $('pings-display');
+const breathEl = $('breath');
+const timeEl = $('time-display');
+let lastTimeKey = -1;
+const pad2 = n => String(n).padStart(2, '0');
 const solarHorizonTrack = $('solar-horizon-track');
 const workWindowTrack = $('work-window-track');
 
-// Keep location and the UK work-window lock in step with the calendar app in other tabs.
+// Work zone: '' means "the time zone of this device". Shared with the calendar app via localStorage.
+const deviceZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+let workZone = localStorage.getItem('work_zone') ||
+  (localStorage.getItem('lock_to_uk') === 'true' ? 'Europe/London' : '');   // old setting
+
+// By default the work window ignores daylight saving; the toggle in the legend turns it on.
+let followDst = localStorage.getItem('work_follow_dst') === 'true';
+
+// Keep location and work zone in step with the calendar app in other tabs.
 window.addEventListener('storage', e => {
   if (e.key === 'user_lat') MY_LAT = parseFloat(e.newValue) || 51.5074;
   if (e.key === 'user_long') MY_LONG = parseFloat(e.newValue) || -0.1278;
+  if (e.key === 'work_zone') { workZone = e.newValue || ''; $('work-zone').value = workZone; }
+  if (e.key === 'work_follow_dst') { followDst = e.newValue === 'true'; $('follow-dst').checked = followDst; refreshZoneLabels(); }
   lastRingKey = ''; // force the rings to redraw
 });
 
@@ -87,16 +101,15 @@ function drawNotches() {
   }
 }
 
-// ---- Daylight and work-window rings --------------------------------------
-// Both rings sit on the same 24-hour scale as the hour hand (midnight at the top),
-// so the hand points into the arc whenever the moment is inside it.
+// ---- Daylight and work-window bars --------------------------------------
+// The hands show one planet-wide time (UTC, midnight at the top). Both bars sit on that
+// same 24-hour dial: daylight is placed from your location, the work window from your work zone.
 const C_SOLAR = 2 * Math.PI * 112;
 const C_WORK = 2 * Math.PI * 104;
 let lastRingKey = '';
 
-function localHour(date) {
-  const ms = date.getTime() + (MY_LONG / 15) * 3600000;
-  return (((ms % DAY_MS) + DAY_MS) % DAY_MS) / 3600000;
+function utcHour(date) {
+  return (((date.getTime() % DAY_MS) + DAY_MS) % DAY_MS) / 3600000;
 }
 
 function setArc(el, circumference, startHour, lengthHours) {
@@ -105,34 +118,21 @@ function setArc(el, circumference, startHour, lengthHours) {
   el.style.transform = `rotate(${-90 + (startHour / 24) * 360}deg)`;
 }
 
-// London's offset from UTC right now (0 in winter, 1 in summer), worked out directly.
-function londonOffsetHours(now) {
-  const parts = new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'Europe/London', hourCycle: 'h23',
-    year: 'numeric', month: 'numeric', day: 'numeric',
-    hour: 'numeric', minute: 'numeric', second: 'numeric'
-  }).formatToParts(now);
-  const g = type => Number(parts.find(p => p.type === type).value);
-  const wall = Date.UTC(g('year'), g('month') - 1, g('day'), g('hour'), g('minute'), g('second'));
-  return (wall - Math.floor(now.getTime() / 1000) * 1000) / 3600000;
-}
-
 function updateRings(now) {
-  const lockToUK = localStorage.getItem('lock_to_uk') === 'true';
-  const key = `${Math.floor(now.getTime() / 60000)}|${MY_LAT}|${MY_LONG}|${lockToUK}`;
-  if (key === lastRingKey) return;       // the rings only need redrawing once a minute
+  const key = `${Math.floor(now.getTime() / 60000)}|${MY_LAT}|${MY_LONG}|${workZone}|${followDst}`;
+  if (key === lastRingKey) return;       // the bars only need redrawing once a minute
   lastRingKey = key;
 
-  // Daylight
+  // Daylight at your location
   try {
     const t = SunCalc.getTimes(now, MY_LAT, MY_LONG);
     if (isNaN(t.sunrise.getTime()) || isNaN(t.sunset.getTime())) {
-      // Polar day or night: fill the ring or leave it empty.
+      // Polar day or night: fill the bar or leave it empty.
       const up = SunCalc.getPosition(now, MY_LAT, MY_LONG).altitude > 0;
       setArc(solarHorizonTrack, C_SOLAR, 0, up ? 24 : 0);
     } else {
-      const rise = localHour(t.sunrise);
-      setArc(solarHorizonTrack, C_SOLAR, rise, (localHour(t.sunset) - rise + 24) % 24);
+      const rise = utcHour(t.sunrise);
+      setArc(solarHorizonTrack, C_SOLAR, rise, (utcHour(t.sunset) - rise + 24) % 24);
     }
     solarHorizonTrack.setAttribute('stroke', '#FEF08A');
   } catch (e) {
@@ -140,23 +140,82 @@ function updateRings(now) {
     solarHorizonTrack.setAttribute('stroke', '#1E293B');
   }
 
-  // Work window: 9 to 5 local solar time, or UK 9 to 5 shown at this longitude.
-  let start = 9;
-  if (lockToUK) start = (9 - londonOffsetHours(now) + MY_LONG / 15 + 24) % 24;
-  setArc(workWindowTrack, C_WORK, start, 8);
+  // Work window: 9 to 5 on the clock of the chosen work zone (standard time unless following daylight saving).
+  const w = S.workWindowUTC(workZone || deviceZone, now, { followDST: followDst });
+  setArc(workWindowTrack, C_WORK, w.start, w.length);
   workWindowTrack.setAttribute('stroke', '#34D399');
+}
+
+// ---- Work zone picker ------------------------------------------------------
+function fmtOffset(h) {
+  const m = Math.round(Math.abs(h) * 60);
+  return `UTC${h < 0 ? '-' : '+'}${Math.floor(m / 60)}${m % 60 ? ':' + String(m % 60).padStart(2, '0') : ''}`;
+}
+
+function zoneLabel(z) {
+  const now = new Date();
+  const off = followDst ? S.zoneOffsetHours(z, now) : S.zoneStandardOffsetHours(z, now);
+  return `${z.replace(/_/g, ' ')} (${fmtOffset(off)})`;
+}
+
+function refreshZoneLabels() {
+  [...$('work-zone').options].slice(1).forEach(o => { o.textContent = zoneLabel(o.value); });
+}
+
+function setupWorkZonePicker() {
+  const select = $('work-zone');
+  const zones = (Intl.supportedValuesOf ? Intl.supportedValuesOf('timeZone') : [])
+    .filter(z => z.includes('/') || z === 'UTC');
+  const fallback = ['Europe/London', 'Europe/Paris', 'America/New_York', 'America/Los_Angeles',
+                    'Asia/Kolkata', 'Asia/Tokyo', 'Australia/Sydney', 'Pacific/Auckland'];
+  const first = document.createElement('option');
+  first.value = '';
+  first.textContent = `My time zone (${deviceZone})`;
+  select.appendChild(first);
+  (zones.length ? zones : fallback).forEach(z => {
+    const o = document.createElement('option');
+    o.value = z; o.textContent = zoneLabel(z);
+    select.appendChild(o);
+  });
+  select.value = workZone;
+  const box = $('follow-dst');
+  box.checked = followDst;
+  box.addEventListener('change', () => {
+    followDst = box.checked;
+    localStorage.setItem('work_follow_dst', followDst);
+    refreshZoneLabels();
+    lastRingKey = '';
+  });
+  select.addEventListener('change', () => {
+    workZone = select.value;
+    if (workZone) localStorage.setItem('work_zone', workZone);
+    else localStorage.removeItem('work_zone');
+    lastRingKey = '';
+  });
 }
 
 // ---- Main loop -----------------------------------------------------------
 function updateClock() {
   const now = new Date();
-  const c = S.fromDate(now, MY_LONG);
+  const c = S.fromDate(now);
 
   hoursHand.style.transform = `rotateZ(${(c.hands.hours / S.HOURS_PER_DAY) * 360}deg)`;
   dinsHand.style.transform = `rotateZ(${(c.hands.dins / S.DINS_PER_HOUR) * 360}deg)`;
   secsHand.style.transform = `rotateZ(${(c.hands.secs / S.SECS_PER_DIN) * 360}deg)`;
 
+  // One sec (10 pings, 7.2 s) is one breath. The pie breathes in for 4 pings and out for 6;
+  // the ping number is green for 0-4 and yellow for 5-9.
+  const timeKey = (c.time.hour * 100 + c.time.din) * 10 + c.time.sec;
+  if (timeKey !== lastTimeKey) {          // hours:dins:secs only needs redrawing when a sec ticks over
+    lastTimeKey = timeKey;
+    timeEl.innerHTML = `<span class="t-hour">${pad2(c.time.hour)}</span>:` +
+      `<span class="t-din">${pad2(c.time.din)}</span>:<span class="t-sec">${pad2(c.time.sec)}</span>`;
+  }
   pingsDisplayEl.textContent = c.time.ping;
+  const inhale = c.time.ping < 5;
+  pingsDisplayEl.classList.toggle('ping-in', inhale);
+  pingsDisplayEl.classList.toggle('ping-out', !inhale);
+  breathEl.style.setProperty('--a', `${(c.hands.secs % 1) * 360}deg`);
 
   // Floating din number, just outside the dins dial.
   const [tx, ty] = polar(76, (c.hands.dins / S.DINS_PER_HOUR) * 360);
@@ -191,6 +250,7 @@ if (!localStorage.getItem('user_lat') && 'geolocation' in navigator) {
 }
 
 drawNotches();
+setupWorkZonePicker();
 updateClock();
 
 if ('serviceWorker' in navigator) {

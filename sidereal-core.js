@@ -6,7 +6,8 @@
  * YEAR   One lap of the Sun against the stars: 31,558,149.76 s (365.256363 days).
  *        Year 0 starts when the Sun crosses sidereal 0 degrees (Lahiri):
  *        2000-04-13 11:52:11 UTC.
- * DAY    One mean solar day, starting at local mean midnight (UTC + longitude / 15).
+ * DAY    One mean solar day at Greenwich (UTC). One planet-wide clock and date for
+ *        everyone; time zones only matter for work windows, not for the clock.
  * UNITS  1 day = 24 hours x 50 dins x 10 secs x 10 pings
  *        (hour 60 min, din 72 s, sec 7.2 s, ping 0.72 s).
  * CALENDAR  10 months x 36 days (6 weeks of 6 days), 4 seasons of 90 days,
@@ -21,7 +22,7 @@
 
   // The instant of Year 0 (for reference; the calendar counts whole local days).
   const EPOCH_UTC_MS = Date.UTC(2000, 3, 13, 11, 52, 11);
-  // Local mean date of Year 0, day 1, as a count of days since 1970-01-01.
+  // UTC date of Year 0, day 1, as a count of days since 1970-01-01.
   const EPOCH_DAY_NUMBER = Date.UTC(2000, 3, 13) / 86400000;
 
   const HOURS_PER_DAY = 24, DINS_PER_HOUR = 50, SECS_PER_DIN = 10, PINGS_PER_SEC = 10;
@@ -67,14 +68,9 @@
   function daysInYear(n) { return 365 + (isLeapYear(n) ? 1 : 0); }
 
   // ---- Day count -------------------------------------------------------
-  /** Local mean time, expressed as ms on a timeline where local midnights fall on whole days. */
-  function localMeanMs(date, longitude) {
-    return date.getTime() + (longitude / 15) * 3600000;
-  }
-
-  /** Whole local mean days since Year 0 day 1 (negative before it). */
-  function dayIndexOf(date, longitude) {
-    return Math.floor(localMeanMs(date, longitude) / DAY_MS) - EPOCH_DAY_NUMBER;
+  /** Whole days since Year 0 day 1, counted on the UTC (Greenwich) day. Negative before it. */
+  function dayIndexOf(date) {
+    return Math.floor(date.getTime() / DAY_MS) - EPOCH_DAY_NUMBER;
   }
 
   function yearOfDayIndex(dayIndex) {
@@ -86,11 +82,11 @@
 
   // ---- Full breakdown --------------------------------------------------
   /**
-   * Everything the clock and calendar need for one instant at one longitude.
+   * Everything the clock and calendar need for one instant. The answer is the same everywhere.
    * Return days have season/month/weekday set to null.
    */
-  function fromDate(date, longitude) {
-    const lmt = localMeanMs(date, longitude);
+  function fromDate(date) {
+    const lmt = date.getTime();
     const dayIndex = Math.floor(lmt / DAY_MS) - EPOCH_DAY_NUMBER;
     const year = yearOfDayIndex(dayIndex);
     const dayOfYear = dayIndex - yearStartDayIndex(year);       // 0-based
@@ -133,7 +129,7 @@
       dins:  (todMs % HOUR_MS) / DIN_MS,
       secs:  (todMs % DIN_MS) / SEC_MS
     };
-    cal.localDecimalHour = todMs / HOUR_MS;                     // 0-24, same scale as a normal clock
+    cal.hourOfDay = todMs / HOUR_MS;                            // 0-24 on the dial, midnight (UTC) at the top
     return cal;
   }
 
@@ -145,10 +141,47 @@
     return start + (d.month - 1) * DAYS_PER_MONTH + (d.day - 1);
   }
 
-  /** Local mean calendar date (the ordinary-calendar day) for a day index: {y, m, d}. */
+  /** Ordinary (UTC) calendar date on which a day index begins: {y, m, d}. */
   function gregorianOfDayIndex(dayIndex) {
     const dt = new Date((EPOCH_DAY_NUMBER + dayIndex) * DAY_MS);
     return { y: dt.getUTCFullYear(), m: dt.getUTCMonth() + 1, d: dt.getUTCDate() };
+  }
+
+  // ---- Time zones (work windows only) ---------------------------------
+  /** UTC offset in hours (may be fractional, e.g. 5.5) of an IANA time zone at an instant. */
+  function zoneOffsetHours(timeZone, date) {
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone, hourCycle: 'h23',
+      year: 'numeric', month: 'numeric', day: 'numeric',
+      hour: 'numeric', minute: 'numeric', second: 'numeric'
+    }).formatToParts(date);
+    const g = type => Number(parts.find(p => p.type === type).value);
+    const wall = Date.UTC(g('year'), g('month') - 1, g('day'), g('hour'), g('minute'), g('second'));
+    return (wall - Math.floor(date.getTime() / 1000) * 1000) / 3600000;
+  }
+
+  /**
+   * A zone's standard-time offset (no daylight saving): the smaller of its January and July
+   * offsets in the year of `date`. Right for nearly every zone, including the southern hemisphere.
+   */
+  function zoneStandardOffsetHours(timeZone, date) {
+    const y = date.getUTCFullYear();
+    return Math.min(zoneOffsetHours(timeZone, new Date(Date.UTC(y, 0, 1))),
+                    zoneOffsetHours(timeZone, new Date(Date.UTC(y, 6, 1))));
+  }
+
+  /**
+   * A work window (default 9 to 17 on that zone's clock) expressed on the planet dial:
+   * {start, length} in hours from UTC midnight. The start can wrap past the top of the dial.
+   * By default daylight saving is ignored, so the window never moves; set followDST to true
+   * to follow the zone's real clock changes.
+   * options: { startHour = 9, endHour = 17, followDST = false }
+   */
+  function workWindowUTC(timeZone, date, options) {
+    const o = options || {};
+    const s = o.startHour == null ? 9 : o.startHour, e = o.endHour == null ? 17 : o.endHour;
+    const off = o.followDST ? zoneOffsetHours(timeZone, date) : zoneStandardOffsetHours(timeZone, date);
+    return { start: (((s - off) % 24) + 24) % 24, length: (e - s + 24) % 24 };
   }
 
   /** "Γ VI 11 ♄" style label, or "Return day 2" during the Return days. */
@@ -165,7 +198,8 @@
     MONTHS_PER_YEAR, DAYS_PER_MONTH, DAYS_PER_WEEK, DAYS_PER_SEASON,
     SEASONS, MONTHS, WEEKDAYS,
     isLeapYear, yearStartDayIndex, daysInYear, dayIndexOf, yearOfDayIndex,
-    fromDate, dayIndexFromCalendar, gregorianOfDayIndex, format
+    fromDate, dayIndexFromCalendar, gregorianOfDayIndex, format,
+    zoneOffsetHours, zoneStandardOffsetHours, workWindowUTC
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
