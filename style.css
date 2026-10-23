@@ -163,7 +163,7 @@ body {
   
   /* NEW: Turns the legend into a two-column layout on mobile, then defaults back to a single column block on desktop where it has room to breathe */
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0px 15px;
 }
 
@@ -202,7 +202,7 @@ body {
 /* On small screens, split items into 2 parallel columns so they take up less vertical space */
 @media (max-width: 767px) {
   .legend-container {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 }
 
@@ -280,50 +280,7 @@ body {
   font-weight: bold;
 }
 
-/* --- Breath cycle: one sec (10 pings, 7.2 s) = 4 pings in (green), 6 pings out (yellow) --- */
 .ping-row { display: flex; align-items: center; justify-content: center; gap: 10px; }
-#pings-display.ping-in  { color: #86EFAC; }
-#pings-display.ping-out { color: #FFD700; }
-
-.breath {
-  --a: 0deg;
-  position: relative;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background-color: #111827;
-  border: 2px solid #374151;
-  box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
-}
-
-/* The coloured wedge: a fixed gradient around the circle, revealed clockwise from the top. */
-.breath::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: conic-gradient(from 0deg,
-    #047857 0deg,      /* start of the in-breath: dark green */
-    #86EFAC 124deg,    /* lighter green */
-    #EAB308 144deg,    /* ping 4: yellow, the out-breath begins */
-    #FEF08A 320deg,    /* ping 9: pale yellow */
-    #047857 360deg);   /* fades back to green */
-  -webkit-mask-image: conic-gradient(#000 0deg, #000 var(--a), transparent var(--a), transparent 360deg);
-  mask-image: conic-gradient(#000 0deg, #000 var(--a), transparent var(--a), transparent 360deg);
-}
-
-/* --- Work zone picker --- */
-.legend-item label { flex-shrink: 0; margin-right: 8px; }
-.legend-item select {
-  flex: 1;
-  min-width: 0;
-  background-color: #0F172A;
-  color: #e2e8f0;
-  border: 1px solid #374151;
-  border-radius: 4px;
-  padding: 4px;
-  font-size: 0.75rem;
-}
 
 /* --- Digital time box: hours:dins:secs --- */
 #time-display {
@@ -342,3 +299,21 @@ body {
 #time-display .t-din  { color: #60A5FA; }
 #time-display .t-sec  { color: #F87171; }
 .legend-item input[type="checkbox"] { margin-right: 6px; accent-color: #34D399; }
+
+/* --- Work zone picker --- */
+.legend-item label { flex-shrink: 0; margin-right: 8px; }
+.legend-item select {
+  flex: 1 1 0;
+  width: 0;                 /* a long zone name can no longer stretch the legend */
+  min-width: 0;
+  max-width: 100%;
+  background-color: #0F172A;
+  color: #e2e8f0;
+  color-scheme: dark;       /* dark drop-down list as well */
+  border: 1px solid #374151;
+  border-radius: 4px;
+  padding: 4px;
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+}
+.legend-item select option { background-color: #0F172A; color: #e2e8f0; }

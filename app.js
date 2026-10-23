@@ -22,7 +22,6 @@ const dinDisplayText = $('din-display-text');
 const rotationEl = $('rotation-display');
 const yearDisplayEl = $('year-display');
 const pingsDisplayEl = $('pings-display');
-const breathEl = $('breath');
 const timeEl = $('time-display');
 let lastTimeKey = -1;
 const pad2 = n => String(n).padStart(2, '0');
@@ -203,8 +202,6 @@ function updateClock() {
   dinsHand.style.transform = `rotateZ(${(c.hands.dins / S.DINS_PER_HOUR) * 360}deg)`;
   secsHand.style.transform = `rotateZ(${(c.hands.secs / S.SECS_PER_DIN) * 360}deg)`;
 
-  // One sec (10 pings, 7.2 s) is one breath. The pie breathes in for 4 pings and out for 6;
-  // the ping number is green for 0-4 and yellow for 5-9.
   const timeKey = (c.time.hour * 100 + c.time.din) * 10 + c.time.sec;
   if (timeKey !== lastTimeKey) {          // hours:dins:secs only needs redrawing when a sec ticks over
     lastTimeKey = timeKey;
@@ -212,10 +209,6 @@ function updateClock() {
       `<span class="t-din">${pad2(c.time.din)}</span>:<span class="t-sec">${pad2(c.time.sec)}</span>`;
   }
   pingsDisplayEl.textContent = c.time.ping;
-  const inhale = c.time.ping < 5;
-  pingsDisplayEl.classList.toggle('ping-in', inhale);
-  pingsDisplayEl.classList.toggle('ping-out', !inhale);
-  breathEl.style.setProperty('--a', `${(c.hands.secs % 1) * 360}deg`);
 
   // Floating din number, just outside the dins dial.
   const [tx, ty] = polar(76, (c.hands.dins / S.DINS_PER_HOUR) * 360);
