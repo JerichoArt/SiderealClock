@@ -4,7 +4,7 @@ A clock and calendar for the whole planet, built on the **sidereal year**. Every
 
 Companion app: [Sidereal Calendar](https://jerichoart.github.io/SiderealCalendar/)
 
-<!-- Add the address of this clock's GitHub Pages site here, and a screenshot: ![Sidereal Clock](screenshot.png) -->
+https://jerichoart.github.io/SiderealClock/
 
 ## The idea
 
